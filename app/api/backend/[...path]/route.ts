@@ -33,10 +33,17 @@ function forwardRequestHeaders(req: NextRequest): Headers {
   return out;
 }
 
+/** Node `fetch` decompresses gzip/br bodies but may still expose `Content-Encoding`; forwarding it breaks the browser (ERR_CONTENT_DECODING_FAILED). */
+const STRIP_FROM_UPSTREAM_RESPONSE = new Set([
+  ...HOP_BY_HOP,
+  "content-encoding",
+  "content-length",
+]);
+
 function forwardResponseHeaders(res: Response): Headers {
   const out = new Headers();
   res.headers.forEach((value, key) => {
-    if (HOP_BY_HOP.has(key.toLowerCase())) return;
+    if (STRIP_FROM_UPSTREAM_RESPONSE.has(key.toLowerCase())) return;
     out.set(key, value);
   });
   return out;
