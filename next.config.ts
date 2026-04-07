@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
-};
+/** API proxy: `app/api/backend/[...path]/route.ts` forwards to `API_URL` at request time. */
+const nextConfig: NextConfig = {};
 
 export default nextConfig;

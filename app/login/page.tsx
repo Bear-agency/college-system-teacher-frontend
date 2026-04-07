@@ -46,8 +46,8 @@ export default function LoginPage() {
         <CardHeader>
           <CardTitle>Admin Login</CardTitle>
           <CardDescription>
-            JWT is stored in a cookie (js-cookie) with expiry aligned to{" "}
-            <code className="text-xs">NEXT_PUBLIC_JWT_EXPIRATION</code>. Use your NestJS admin
+            JWT is stored in a cookie (js-cookie) with expiry aligned to the token&apos;s{" "}
+            <code className="text-xs">exp</code> claim. Use your NestJS admin
             account.
           </CardDescription>
         </CardHeader>

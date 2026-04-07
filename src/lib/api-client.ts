@@ -1,7 +1,8 @@
 import axios, { type AxiosError } from "axios";
 import { getAuthJwtCookie, removeAuthJwtCookie } from "@/src/lib/auth-token-cookie";
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:3000";
+/** Browser calls same-origin `/api/backend/*`; the App Route proxies to `API_URL` (server-only). */
+const baseURL = "/api/backend";
 
 export const apiClient = axios.create({
   baseURL,
