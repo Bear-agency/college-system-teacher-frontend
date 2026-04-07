@@ -23,7 +23,8 @@ import { useAcademicYearStore } from "@/src/store/academic-year-store";
 import type { AcademicYear, Department } from "@/src/types/api";
 import type { z } from "zod";
 
-type FormValues = z.infer<typeof departmentCreateSchema>;
+type DepartmentCreateFormInput = z.input<typeof departmentCreateSchema>;
+type DepartmentCreateFormOutput = z.output<typeof departmentCreateSchema>;
 
 export default function AdminDepartmentsPage() {
   const queryClient = useQueryClient();
@@ -40,7 +41,7 @@ export default function AdminDepartmentsPage() {
       departmentsService.list(selectedAcademicYearId ?? undefined),
   });
 
-  const form = useForm<FormValues>({
+  const form = useForm<DepartmentCreateFormInput, unknown, DepartmentCreateFormOutput>({
     resolver: zodResolver(departmentCreateSchema),
     defaultValues: { name: "", code: "", academicYearIds: [] },
   });
@@ -76,7 +77,11 @@ export default function AdminDepartmentsPage() {
   const columns = useMemo<ColumnDef<Department>[]>(
     () => [
       { accessorKey: "name", header: "Name" },
-      { accessorKey: "code", header: "Code" },
+      {
+        accessorKey: "code",
+        header: "Code",
+        cell: ({ row }) => row.original.code ?? "—",
+      },
       {
         id: "years",
         header: "Years",
@@ -135,8 +140,8 @@ export default function AdminDepartmentsPage() {
                 ) : null}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="d-code">Code</Label>
-                <Input id="d-code" {...form.register("code")} />
+                <Label htmlFor="d-code">Code (optional)</Label>
+                <Input id="d-code" placeholder="e.g. CS" {...form.register("code")} />
                 {form.formState.errors.code ? (
                   <p className="text-sm text-destructive">{form.formState.errors.code.message}</p>
                 ) : null}

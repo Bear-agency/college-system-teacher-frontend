@@ -78,14 +78,14 @@ export interface SubjectHierarchy {
 export interface Department {
   id: string;
   name: string;
-  code: string;
+  code: string | null;
   academicYearIds: string[];
   subjects: SubjectHierarchy[];
 }
 
 export interface CreateDepartmentRequest {
   name: string;
-  code: string;
+  code?: string;
   academicYearIds: string[];
 }
 

@@ -148,7 +148,7 @@ export default function AdminSubjectsPage() {
             <SelectContent>
               {(departmentsQuery.data ?? []).map((d: Department) => (
                 <SelectItem key={d.id} value={d.id}>
-                  {d.name} ({d.code})
+                  {d.code ? `${d.name} (${d.code})` : d.name}
                 </SelectItem>
               ))}
             </SelectContent>

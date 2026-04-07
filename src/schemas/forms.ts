@@ -16,7 +16,19 @@ export const academicYearCreateSchema = z
 
 export const departmentCreateSchema = z.object({
   name: z.string().min(3).max(120),
-  code: z.string().min(2).max(10),
+  code: z
+    .string()
+    .max(10)
+    .transform((s) => {
+      const t = s.trim();
+      return t === "" ? undefined : t;
+    })
+    .pipe(
+      z.union([
+        z.undefined(),
+        z.string().min(2, "Code must be at least 2 characters when provided").max(10),
+      ]),
+    ),
   academicYearIds: z.array(mongoId).min(1, "Select at least one academic year"),
 });
 
