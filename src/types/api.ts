@@ -111,6 +111,8 @@ export interface Subject {
   description: string;
   departmentId: string;
   semester: 1 | 2;
+  /** Study year / course number (1st–4th year). */
+  courseNumber: 1 | 2 | 3 | 4;
 }
 
 export interface CreateSubjectRequest {
@@ -118,42 +120,22 @@ export interface CreateSubjectRequest {
   description: string;
   departmentId: string;
   semester: 1 | 2;
+  courseNumber: 1 | 2 | 3 | 4;
 }
 
 export type UpdateSubjectRequest = Partial<CreateSubjectRequest>;
-
-/** Courses (under a subject) */
-export interface Course {
-  id: string;
-  name: string;
-  code: string | null;
-  description: string;
-  subjectId: string;
-}
-
-export type CourseWire = Omit<Course, "id"> & { id?: string; _id?: string };
-
-export interface CreateCourseRequest {
-  name: string;
-  code?: string;
-  description: string;
-  subjectId: string;
-}
-
-export type UpdateCourseRequest = Partial<CreateCourseRequest>;
 
 /** Lectures */
 export interface Lecture {
   id: string;
   title: string;
-  courseId: string | null;
-  subjectId: string | null;
+  subjectId: string;
   contentMarkdown: string;
 }
 
 export interface CreateLectureRequest {
   title: string;
-  courseId: string;
+  subjectId: string;
   contentMarkdown?: string;
 }
 
@@ -169,11 +151,6 @@ export interface MigrateLecturesRequest {
 export interface MigrateLecturesResponse {
   modifiedCount?: number;
   [key: string]: unknown;
-}
-
-export interface MigrateLecturesToCoursesResponse {
-  coursesCreated: number;
-  lecturesUpdated: number;
 }
 
 /** Groups (admin) */

@@ -7,10 +7,13 @@ import type {
 } from "@/src/types/api";
 
 export const subjectsService = {
-  list(departmentId?: string): Promise<Subject[]> {
+  list(departmentId?: string, courseNumber?: 1 | 2 | 3 | 4): Promise<Subject[]> {
+    const params: Record<string, string | number> = {};
+    if (departmentId) params.departmentId = departmentId;
+    if (courseNumber !== undefined) params.courseNumber = courseNumber;
     return apiClient
       .get<Subject[]>("/subjects", {
-        params: departmentId ? { departmentId } : undefined,
+        params: Object.keys(params).length ? params : undefined,
       })
       .then((r) => r.data);
   },

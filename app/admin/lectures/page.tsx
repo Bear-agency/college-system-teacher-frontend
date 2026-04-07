@@ -21,16 +21,10 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  coursesService,
-  departmentsService,
-  getApiErrorMessage,
-  lecturesService,
-  subjectsService,
-} from "@/src/services/api";
+import { departmentsService, getApiErrorMessage, lecturesService, subjectsService } from "@/src/services/api";
 import { lectureCreateFormSchema, lectureUpdateSchema } from "@/src/schemas/forms";
 import { useAcademicYearStore } from "@/src/store/academic-year-store";
-import type { Course, Department, Lecture, Subject } from "@/src/types/api";
+import type { Department, Lecture, Subject } from "@/src/types/api";
 import type { z } from "zod";
 
 type CreateForm = z.infer<typeof lectureCreateFormSchema>;
@@ -38,12 +32,18 @@ type EditForm = z.infer<typeof lectureUpdateSchema>;
 
 const SELECT_NONE = "__none__";
 
+const YEAR_SHORT: Record<1 | 2 | 3 | 4, string> = {
+  1: "Year 1",
+  2: "Year 2",
+  3: "Year 3",
+  4: "Year 4",
+};
+
 export default function AdminLecturesPage() {
   const queryClient = useQueryClient();
   const { selectedAcademicYearId } = useAcademicYearStore();
   const [departmentId, setDepartmentId] = useState("");
   const [subjectId, setSubjectId] = useState("");
-  const [courseId, setCourseId] = useState("");
   const [selectedLecture, setSelectedLecture] = useState<Lecture | null>(null);
 
   const departmentsQuery = useQuery({
@@ -58,16 +58,10 @@ export default function AdminLecturesPage() {
     enabled: Boolean(departmentId),
   });
 
-  const coursesQuery = useQuery({
-    queryKey: ["courses", subjectId],
-    queryFn: () => coursesService.list(subjectId),
-    enabled: Boolean(subjectId),
-  });
-
   const lecturesQuery = useQuery({
-    queryKey: ["lectures", courseId],
-    queryFn: () => lecturesService.list({ courseId }),
-    enabled: Boolean(courseId),
+    queryKey: ["lectures", subjectId],
+    queryFn: () => lecturesService.list(subjectId),
+    enabled: Boolean(subjectId),
   });
 
   const createForm = useForm<CreateForm>({
@@ -94,7 +88,7 @@ export default function AdminLecturesPage() {
     onSuccess: () => {
       toast.success("Lecture created");
       createForm.reset({ title: "", contentMarkdown: "" });
-      queryClient.invalidateQueries({ queryKey: ["lectures", courseId] });
+      queryClient.invalidateQueries({ queryKey: ["lectures", subjectId] });
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });
@@ -104,7 +98,7 @@ export default function AdminLecturesPage() {
       lecturesService.update(id, body),
     onSuccess: () => {
       toast.success("Lecture saved");
-      queryClient.invalidateQueries({ queryKey: ["lectures", courseId] });
+      queryClient.invalidateQueries({ queryKey: ["lectures", subjectId] });
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });
@@ -125,26 +119,13 @@ export default function AdminLecturesPage() {
     [],
   );
 
-  const migrateToCoursesMutation = useMutation({
-    mutationFn: () => lecturesService.migrateToCourses(),
-    onSuccess: (res) => {
-      toast.success(
-        `Migration done: ${res.coursesCreated} course(s) created, ${res.lecturesUpdated} lecture(s) updated.`,
-      );
-      queryClient.invalidateQueries({ queryKey: ["courses"] });
-      queryClient.invalidateQueries({ queryKey: ["lectures"] });
-    },
-    onError: (e) => toast.error(getApiErrorMessage(e)),
-  });
-
   const lectureRows: Lecture[] = useMemo(() => {
     const raw = lecturesQuery.data ?? [];
     return raw.map((row) => ({
-      id: row.id ?? (row as unknown as { _id: string })._id,
+      id: (row as Lecture).id ?? (row as unknown as { _id: string })._id,
       title: row.title,
-      courseId: row.courseId ?? null,
-      subjectId: row.subjectId ?? null,
-      contentMarkdown: row.contentMarkdown ?? "",
+      subjectId: row.subjectId,
+      contentMarkdown: (row as Lecture).contentMarkdown ?? "",
     }));
   }, [lecturesQuery.data]);
 
@@ -153,7 +134,7 @@ export default function AdminLecturesPage() {
       <div>
         <h1 className="text-2xl font-semibold">Lectures</h1>
         <p className="text-sm text-muted-foreground">
-          Select department, subject, and course, then create or edit markdown content.
+          Select department and subject, then create or edit markdown content.
         </p>
       </div>
 
@@ -170,7 +151,6 @@ export default function AdminLecturesPage() {
                 onValueChange={(v) => {
                   setDepartmentId(v === SELECT_NONE ? "" : (v ?? ""));
                   setSubjectId("");
-                  setCourseId("");
                   setSelectedLecture(null);
                 }}
               >
@@ -200,7 +180,6 @@ export default function AdminLecturesPage() {
                 value={subjectId === "" ? SELECT_NONE : subjectId}
                 onValueChange={(v) => {
                   setSubjectId(v === SELECT_NONE ? "" : (v ?? ""));
-                  setCourseId("");
                   setSelectedLecture(null);
                 }}
                 disabled={!departmentId}
@@ -211,7 +190,10 @@ export default function AdminLecturesPage() {
                       const v = String(value ?? "");
                       if (v === "" || v === SELECT_NONE) return "Subject";
                       const s = (subjectsQuery.data ?? []).find((x) => x.id === v);
-                      return s ? s.name : v;
+                      if (!s) return v;
+                      return s.courseNumber != null
+                        ? `${s.name} (${YEAR_SHORT[s.courseNumber]})`
+                        : s.name;
                     }}
                   </SelectValue>
                 </SelectTrigger>
@@ -220,62 +202,11 @@ export default function AdminLecturesPage() {
                   {(subjectsQuery.data ?? []).map((s: Subject) => (
                     <SelectItem key={s.id} value={s.id}>
                       {s.name}
+                      {s.courseNumber != null ? ` (${YEAR_SHORT[s.courseNumber]})` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Course</Label>
-              <Select
-                value={courseId === "" ? SELECT_NONE : courseId}
-                onValueChange={(v) => {
-                  setCourseId(v === SELECT_NONE ? "" : (v ?? ""));
-                  setSelectedLecture(null);
-                }}
-                disabled={!subjectId}
-              >
-                <SelectTrigger className="w-full min-w-0 max-w-full">
-                  <SelectValue placeholder="Course">
-                    {(value: unknown) => {
-                      const v = String(value ?? "");
-                      if (v === "" || v === SELECT_NONE) return "Course";
-                      const c = (coursesQuery.data ?? []).find((x) => x.id === v);
-                      return c ? (c.code ? `${c.name} (${c.code})` : c.name) : v;
-                    }}
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={SELECT_NONE}>Course</SelectItem>
-                  {(coursesQuery.data ?? []).map((c: Course) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.code ? `${c.name} (${c.code})` : c.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="border-t pt-3">
-              <p className="mb-2 text-xs text-muted-foreground">
-                One-time: create default courses and move lectures that still use subject-only links.
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={migrateToCoursesMutation.isPending}
-                onClick={() => {
-                  if (
-                    confirm(
-                      "Run global migration? Default courses will be created per subject where needed.",
-                    )
-                  ) {
-                    migrateToCoursesMutation.mutate();
-                  }
-                }}
-              >
-                {migrateToCoursesMutation.isPending ? "Migrating…" : "Migrate lectures to courses"}
-              </Button>
             </div>
           </CardContent>
         </Card>
@@ -288,13 +219,13 @@ export default function AdminLecturesPage() {
             <form
               className="space-y-3"
               onSubmit={createForm.handleSubmit((v) => {
-                if (!courseId) {
-                  toast.error("Select a course first");
+                if (!subjectId) {
+                  toast.error("Select a subject first");
                   return;
                 }
                 createMutation.mutate({
                   title: v.title,
-                  courseId,
+                  subjectId,
                   contentMarkdown: v.contentMarkdown,
                 });
               })}
@@ -312,7 +243,7 @@ export default function AdminLecturesPage() {
                 <Label>Markdown body</Label>
                 <Textarea rows={6} {...createForm.register("contentMarkdown")} />
               </div>
-              <Button type="submit" disabled={!courseId || createMutation.isPending}>
+              <Button type="submit" disabled={!subjectId || createMutation.isPending}>
                 Create lecture
               </Button>
             </form>
@@ -320,10 +251,8 @@ export default function AdminLecturesPage() {
         </Card>
       </div>
 
-      {!courseId ? (
-        <p className="text-sm text-muted-foreground">
-          Select a course to load lectures. Add courses under Admin → Courses if the list is empty.
-        </p>
+      {!subjectId ? (
+        <p className="text-sm text-muted-foreground">Select a subject to load lectures.</p>
       ) : lecturesQuery.isLoading ? (
         <Skeleton className="h-48 w-full" />
       ) : (

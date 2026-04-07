@@ -3,15 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import {
-  BookOpen,
-  CalendarRange,
-  GraduationCap,
-  LayoutDashboard,
-  Layers,
-  Library,
-  LogOut,
-} from "lucide-react";
+import { BookOpen, CalendarRange, GraduationCap, LayoutDashboard, Layers, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { academicYearsService } from "@/src/services/api/academic-years.service";
 import { useAcademicYearStore } from "@/src/store/academic-year-store";
@@ -33,7 +25,6 @@ const nav = [
   { href: "/admin/academic-years", label: "Academic Years", icon: CalendarRange },
   { href: "/admin/departments", label: "Departments", icon: Layers },
   { href: "/admin/subjects", label: "Subjects", icon: BookOpen },
-  { href: "/admin/courses", label: "Courses", icon: Library },
   { href: "/admin/lectures", label: "Lectures", icon: GraduationCap },
 ];
 

@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 import { departmentsService, getApiErrorMessage, subjectsService } from "@/src/services/api";
 import { subjectCreateSchema } from "@/src/schemas/forms";
 import { useAcademicYearStore } from "@/src/store/academic-year-store";
@@ -31,10 +32,20 @@ type FormValues = z.infer<typeof subjectCreateSchema>;
 /** Base UI Select must not switch `value` between undefined and string — keep controlled with a sentinel. */
 const NO_DEPARTMENT = "__none__";
 
+type CourseYearFilter = "all" | 1 | 2 | 3 | 4;
+
+const YEAR_LABELS: Record<Exclude<CourseYearFilter, "all">, string> = {
+  1: "1st year",
+  2: "2nd year",
+  3: "3rd year",
+  4: "4th year",
+};
+
 export default function AdminSubjectsPage() {
   const queryClient = useQueryClient();
   const { selectedAcademicYearId } = useAcademicYearStore();
   const [departmentId, setDepartmentId] = useState<string>("");
+  const [courseYear, setCourseYear] = useState<CourseYearFilter>("all");
 
   const departmentsQuery = useQuery({
     queryKey: ["departments", selectedAcademicYearId],
@@ -43,8 +54,12 @@ export default function AdminSubjectsPage() {
   });
 
   const subjectsQuery = useQuery({
-    queryKey: ["subjects", departmentId],
-    queryFn: () => subjectsService.list(departmentId || undefined),
+    queryKey: ["subjects", departmentId, courseYear],
+    queryFn: () =>
+      subjectsService.list(
+        departmentId || undefined,
+        courseYear === "all" ? undefined : courseYear,
+      ),
     enabled: Boolean(departmentId),
   });
 
@@ -55,6 +70,7 @@ export default function AdminSubjectsPage() {
       description: "",
       departmentId: "",
       semester: 1,
+      courseNumber: 1,
     },
   });
 
@@ -73,8 +89,9 @@ export default function AdminSubjectsPage() {
         description: "",
         departmentId: departmentId || "",
         semester: 1,
+        courseNumber: 1,
       });
-      queryClient.invalidateQueries({ queryKey: ["subjects", departmentId] });
+      void queryClient.invalidateQueries({ queryKey: ["subjects", departmentId], exact: false });
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });
@@ -83,7 +100,7 @@ export default function AdminSubjectsPage() {
     mutationFn: subjectsService.remove,
     onSuccess: () => {
       toast.success("Subject removed");
-      queryClient.invalidateQueries({ queryKey: ["subjects", departmentId] });
+      void queryClient.invalidateQueries({ queryKey: ["subjects", departmentId], exact: false });
     },
     onError: (e) => toast.error(getApiErrorMessage(e)),
   });
@@ -91,6 +108,14 @@ export default function AdminSubjectsPage() {
   const columns = useMemo<ColumnDef<Subject>[]>(
     () => [
       { accessorKey: "name", header: "Name" },
+      {
+        accessorKey: "courseNumber",
+        header: "Study year",
+        cell: ({ row }) => {
+          const y = row.original.courseNumber ?? 1;
+          return YEAR_LABELS[y as keyof typeof YEAR_LABELS] ?? y;
+        },
+      },
       { accessorKey: "semester", header: "Semester" },
       {
         id: "desc",
@@ -127,7 +152,8 @@ export default function AdminSubjectsPage() {
       <div>
         <h1 className="text-2xl font-semibold">Subjects</h1>
         <p className="text-sm text-muted-foreground">
-          Choose a department (scoped by sidebar academic year). List and create subjects.
+          Choose a department, then filter by study year (course). Subjects belong to a department and
+          a course number (1–4).
         </p>
       </div>
 
@@ -135,35 +161,70 @@ export default function AdminSubjectsPage() {
         <CardHeader>
           <CardTitle>Filter</CardTitle>
         </CardHeader>
-        <CardContent className="max-w-md space-y-2">
-          <Label>Department</Label>
-          <Select
-            value={departmentId === "" ? NO_DEPARTMENT : departmentId}
-            onValueChange={(v) => {
-              const id = v === NO_DEPARTMENT ? "" : (v ?? "");
-              setDepartmentId(id);
-              form.setValue("departmentId", id, { shouldValidate: true });
-            }}
-          >
-            <SelectTrigger className="w-full min-w-0 max-w-full">
-              <SelectValue placeholder="Select department">
-                {(value: unknown) => {
-                  const v = String(value ?? "");
-                  if (v === "" || v === NO_DEPARTMENT) return "Select department";
-                  const d = (departmentsQuery.data ?? []).find((x) => x.id === v);
-                  return d ? (d.code ? `${d.name} (${d.code})` : d.name) : v;
-                }}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NO_DEPARTMENT}>Select department</SelectItem>
-              {(departmentsQuery.data ?? []).map((d: Department) => (
-                <SelectItem key={d.id} value={d.id}>
-                  {d.code ? `${d.name} (${d.code})` : d.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <CardContent className="max-w-2xl space-y-4">
+          <div className="space-y-2">
+            <Label>Department</Label>
+            <Select
+              value={departmentId === "" ? NO_DEPARTMENT : departmentId}
+              onValueChange={(v) => {
+                const id = v === NO_DEPARTMENT ? "" : (v ?? "");
+                setDepartmentId(id);
+                setCourseYear("all");
+                form.setValue("departmentId", id, { shouldValidate: true });
+              }}
+            >
+              <SelectTrigger className="w-full min-w-0 max-w-full">
+                <SelectValue placeholder="Select department">
+                  {(value: unknown) => {
+                    const v = String(value ?? "");
+                    if (v === "" || v === NO_DEPARTMENT) return "Select department";
+                    const d = (departmentsQuery.data ?? []).find((x) => x.id === v);
+                    return d ? (d.code ? `${d.name} (${d.code})` : d.name) : v;
+                  }}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NO_DEPARTMENT}>Select department</SelectItem>
+                {(departmentsQuery.data ?? []).map((d: Department) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.code ? `${d.name} (${d.code})` : d.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {departmentId ? (
+            <div className="space-y-2">
+              <Label>Study year (course)</Label>
+              <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by study year">
+                <Button
+                  type="button"
+                  role="tab"
+                  aria-selected={courseYear === "all"}
+                  variant={courseYear === "all" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setCourseYear("all")}
+                >
+                  All years
+                </Button>
+                {([1, 2, 3, 4] as const).map((y) => (
+                  <Button
+                    key={y}
+                    type="button"
+                    role="tab"
+                    aria-selected={courseYear === y}
+                    variant={courseYear === y ? "default" : "outline"}
+                    size="sm"
+                    className={cn(courseYear === y && "shadow-sm")}
+                    onClick={() => setCourseYear(y)}
+                  >
+                    {YEAR_LABELS[y]}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 
@@ -183,11 +244,37 @@ export default function AdminSubjectsPage() {
             })}
           >
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
+              <div className="space-y-2 md:col-span-2">
                 <Label>Name</Label>
                 <Input {...form.register("name")} />
                 {form.formState.errors.name ? (
                   <p className="text-sm text-destructive">{form.formState.errors.name.message}</p>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                <Label>Study year</Label>
+                <Select
+                  value={String(form.watch("courseNumber"))}
+                  onValueChange={(v) =>
+                    form.setValue("courseNumber", Number(v) as 1 | 2 | 3 | 4, {
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1">1st year</SelectItem>
+                    <SelectItem value="2">2nd year</SelectItem>
+                    <SelectItem value="3">3rd year</SelectItem>
+                    <SelectItem value="4">4th year</SelectItem>
+                  </SelectContent>
+                </Select>
+                {form.formState.errors.courseNumber ? (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.courseNumber.message}
+                  </p>
                 ) : null}
               </div>
               <div className="space-y-2">
