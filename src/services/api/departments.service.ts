@@ -21,8 +21,9 @@ function normalizeDepartment(raw: DepartmentWire): Department {
   } else {
     subjects = [];
   }
+  const id = raw.id ?? raw._id ?? "";
   return {
-    id: raw.id,
+    id,
     name: raw.name,
     code: raw.code ?? null,
     academicYearIds,

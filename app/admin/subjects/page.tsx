@@ -28,6 +28,9 @@ import type { z } from "zod";
 
 type FormValues = z.infer<typeof subjectCreateSchema>;
 
+/** Base UI Select must not switch `value` between undefined and string — keep controlled with a sentinel. */
+const NO_DEPARTMENT = "__none__";
+
 export default function AdminSubjectsPage() {
   const queryClient = useQueryClient();
   const { selectedAcademicYearId } = useAcademicYearStore();
@@ -135,17 +138,25 @@ export default function AdminSubjectsPage() {
         <CardContent className="max-w-md space-y-2">
           <Label>Department</Label>
           <Select
-            value={departmentId || undefined}
+            value={departmentId === "" ? NO_DEPARTMENT : departmentId}
             onValueChange={(v) => {
-              const id = v ?? "";
+              const id = v === NO_DEPARTMENT ? "" : (v ?? "");
               setDepartmentId(id);
               form.setValue("departmentId", id, { shouldValidate: true });
             }}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select department" />
+            <SelectTrigger className="w-full min-w-0 max-w-full">
+              <SelectValue placeholder="Select department">
+                {(value: unknown) => {
+                  const v = String(value ?? "");
+                  if (v === "" || v === NO_DEPARTMENT) return "Select department";
+                  const d = (departmentsQuery.data ?? []).find((x) => x.id === v);
+                  return d ? (d.code ? `${d.name} (${d.code})` : d.name) : v;
+                }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={NO_DEPARTMENT}>Select department</SelectItem>
               {(departmentsQuery.data ?? []).map((d: Department) => (
                 <SelectItem key={d.id} value={d.id}>
                   {d.code ? `${d.name} (${d.code})` : d.name}

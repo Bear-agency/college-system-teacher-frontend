@@ -43,13 +43,34 @@ export const subjectCreateSchema = z.object({
 
 export const subjectUpdateSchema = subjectCreateSchema.partial();
 
+export const courseCreateSchema = z.object({
+  name: z.string().min(3).max(160),
+  description: z.string().min(5).max(2000),
+  code: z
+    .string()
+    .max(20)
+    .transform((s) => {
+      const t = s.trim();
+      return t === "" ? undefined : t;
+    })
+    .pipe(
+      z.union([
+        z.undefined(),
+        z.string().min(2, "Code must be at least 2 characters when provided").max(20),
+      ]),
+    ),
+  subjectId: mongoId,
+});
+
+export const courseUpdateSchema = courseCreateSchema.partial();
+
 export const lectureCreateSchema = z.object({
   title: z.string().min(3).max(120),
-  subjectId: mongoId,
+  courseId: mongoId,
   contentMarkdown: z.string().max(500_000).optional(),
 });
 
-/** Form-only: subject chosen in UI context, not in the form fields */
+/** Form-only: course chosen in UI context, not in the form fields */
 export const lectureCreateFormSchema = z.object({
   title: z.string().min(3).max(120),
   contentMarkdown: z.string().max(500_000).optional(),

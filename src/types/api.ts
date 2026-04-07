@@ -88,7 +88,9 @@ export interface Department {
 }
 
 /** Raw `/departments` entity JSON (before normalization). */
-export type DepartmentWire = Omit<Department, "subjects" | "academicYearIds"> & {
+export type DepartmentWire = Omit<Department, "subjects" | "academicYearIds" | "id"> & {
+  id?: string;
+  _id?: string;
   academicYearIds?: string[];
   subjects?: SubjectHierarchy[];
   subjectIds?: string[];
@@ -120,17 +122,38 @@ export interface CreateSubjectRequest {
 
 export type UpdateSubjectRequest = Partial<CreateSubjectRequest>;
 
+/** Courses (under a subject) */
+export interface Course {
+  id: string;
+  name: string;
+  code: string | null;
+  description: string;
+  subjectId: string;
+}
+
+export type CourseWire = Omit<Course, "id"> & { id?: string; _id?: string };
+
+export interface CreateCourseRequest {
+  name: string;
+  code?: string;
+  description: string;
+  subjectId: string;
+}
+
+export type UpdateCourseRequest = Partial<CreateCourseRequest>;
+
 /** Lectures */
 export interface Lecture {
   id: string;
   title: string;
-  subjectId: string;
+  courseId: string | null;
+  subjectId: string | null;
   contentMarkdown: string;
 }
 
 export interface CreateLectureRequest {
   title: string;
-  subjectId: string;
+  courseId: string;
   contentMarkdown?: string;
 }
 
@@ -146,6 +169,11 @@ export interface MigrateLecturesRequest {
 export interface MigrateLecturesResponse {
   modifiedCount?: number;
   [key: string]: unknown;
+}
+
+export interface MigrateLecturesToCoursesResponse {
+  coursesCreated: number;
+  lecturesUpdated: number;
 }
 
 /** Groups (admin) */

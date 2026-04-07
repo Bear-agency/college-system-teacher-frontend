@@ -1,6 +1,7 @@
 export { apiClient, getApiErrorMessage } from "@/src/services/api/client";
 export { academicYearsService } from "@/src/services/api/academic-years.service";
 export { authService } from "@/src/services/api/auth.service";
+export { coursesService } from "@/src/services/api/courses.service";
 export { departmentsService } from "@/src/services/api/departments.service";
 export { groupsService } from "@/src/services/api/groups.service";
 export { healthService } from "@/src/services/api/health.service";
