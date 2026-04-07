@@ -21,8 +21,11 @@ import type { z } from "zod";
 
 type FormValues = z.infer<typeof academicYearCreateSchema>;
 
+/** Locale-neutral YYYY-MM-DD so SSR (Node) and the browser match. */
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString();
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toISOString().slice(0, 10);
 }
 
 export default function AdminAcademicYearsPage() {

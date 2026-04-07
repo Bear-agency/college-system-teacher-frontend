@@ -75,6 +75,10 @@ export interface SubjectHierarchy {
   lectures: LectureHierarchy[];
 }
 
+/**
+ * Canonical shape used in the UI. Wire JSON from Nest may use `subjectIds` instead of `subjects`;
+ * `departmentsService` normalizes that.
+ */
 export interface Department {
   id: string;
   name: string;
@@ -82,6 +86,13 @@ export interface Department {
   academicYearIds: string[];
   subjects: SubjectHierarchy[];
 }
+
+/** Raw `/departments` entity JSON (before normalization). */
+export type DepartmentWire = Omit<Department, "subjects" | "academicYearIds"> & {
+  academicYearIds?: string[];
+  subjects?: SubjectHierarchy[];
+  subjectIds?: string[];
+};
 
 export interface CreateDepartmentRequest {
   name: string;
