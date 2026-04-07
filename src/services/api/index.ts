@@ -1,0 +1,11 @@
+export { apiClient, getApiErrorMessage } from "@/src/services/api/client";
+export { academicYearsService } from "@/src/services/api/academic-years.service";
+export { authService } from "@/src/services/api/auth.service";
+export { departmentsService } from "@/src/services/api/departments.service";
+export { groupsService } from "@/src/services/api/groups.service";
+export { healthService } from "@/src/services/api/health.service";
+export { lecturesService } from "@/src/services/api/lectures.service";
+export { studentsService } from "@/src/services/api/students.service";
+export { subjectsService } from "@/src/services/api/subjects.service";
+export { testsService } from "@/src/services/api/tests.service";
+export { usersService } from "@/src/services/api/users.service";
