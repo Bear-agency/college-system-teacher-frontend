@@ -117,7 +117,7 @@ export interface Subject {
 
 export interface CreateSubjectRequest {
   name: string;
-  description: string;
+  description?: string;
   departmentId: string;
   semester: 1 | 2;
   courseNumber: 1 | 2 | 3 | 4;

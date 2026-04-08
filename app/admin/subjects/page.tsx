@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { departmentsService, getApiErrorMessage, subjectsService } from "@/src/services/api";
 import { subjectCreateSchema } from "@/src/schemas/forms";
 import { useAcademicYearStore } from "@/src/store/academic-year-store";
@@ -31,10 +30,7 @@ type FormValues = z.infer<typeof subjectCreateSchema>;
 
 /** Base UI Select must not switch `value` between undefined and string — keep controlled with a sentinel. */
 const NO_DEPARTMENT = "__none__";
-
-type CourseYearFilter = "all" | 1 | 2 | 3 | 4;
-
-const YEAR_LABELS: Record<Exclude<CourseYearFilter, "all">, string> = {
+const YEAR_LABELS: Record<1 | 2 | 3 | 4, string> = {
   1: "1st year",
   2: "2nd year",
   3: "3rd year",
@@ -45,7 +41,6 @@ export default function AdminSubjectsPage() {
   const queryClient = useQueryClient();
   const { selectedAcademicYearId } = useAcademicYearStore();
   const [departmentId, setDepartmentId] = useState<string>("");
-  const [courseYear, setCourseYear] = useState<CourseYearFilter>("all");
 
   const departmentsQuery = useQuery({
     queryKey: ["departments", selectedAcademicYearId],
@@ -54,12 +49,8 @@ export default function AdminSubjectsPage() {
   });
 
   const subjectsQuery = useQuery({
-    queryKey: ["subjects", departmentId, courseYear],
-    queryFn: () =>
-      subjectsService.list(
-        departmentId || undefined,
-        courseYear === "all" ? undefined : courseYear,
-      ),
+    queryKey: ["subjects", departmentId],
+    queryFn: () => subjectsService.list(departmentId || undefined),
     enabled: Boolean(departmentId),
   });
 
@@ -169,7 +160,6 @@ export default function AdminSubjectsPage() {
               onValueChange={(v) => {
                 const id = v === NO_DEPARTMENT ? "" : (v ?? "");
                 setDepartmentId(id);
-                setCourseYear("all");
                 form.setValue("departmentId", id, { shouldValidate: true });
               }}
             >
@@ -194,37 +184,6 @@ export default function AdminSubjectsPage() {
             </Select>
           </div>
 
-          {departmentId ? (
-            <div className="space-y-2">
-              <Label>Study year (course)</Label>
-              <div className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by study year">
-                <Button
-                  type="button"
-                  role="tab"
-                  aria-selected={courseYear === "all"}
-                  variant={courseYear === "all" ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setCourseYear("all")}
-                >
-                  All years
-                </Button>
-                {([1, 2, 3, 4] as const).map((y) => (
-                  <Button
-                    key={y}
-                    type="button"
-                    role="tab"
-                    aria-selected={courseYear === y}
-                    variant={courseYear === y ? "default" : "outline"}
-                    size="sm"
-                    className={cn(courseYear === y && "shadow-sm")}
-                    onClick={() => setCourseYear(y)}
-                  >
-                    {YEAR_LABELS[y]}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          ) : null}
         </CardContent>
       </Card>
 

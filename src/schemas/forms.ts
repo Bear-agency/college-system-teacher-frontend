@@ -36,7 +36,14 @@ export const departmentUpdateSchema = departmentCreateSchema.partial();
 
 export const subjectCreateSchema = z.object({
   name: z.string().min(3).max(120),
-  description: z.string().min(5).max(400),
+  description: z
+    .string()
+    .max(400)
+    .transform((s) => {
+      const t = s.trim();
+      return t === "" ? undefined : t;
+    })
+    .optional(),
   departmentId: mongoId,
   semester: z.union([z.literal(1), z.literal(2)]),
   courseNumber: z.union([
