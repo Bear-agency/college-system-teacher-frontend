@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, CalendarRange, GraduationCap, LayoutDashboard, Layers, LogOut } from "lucide-react";
+import {
+  BookOpen,
+  CalendarRange,
+  Cog,
+  GraduationCap,
+  LayoutDashboard,
+  Layers,
+  LogOut,
+  Users,
+  UsersRound,
+} from "lucide-react";
 import { toast } from "sonner";
 import { academicYearsService } from "@/src/services/api/academic-years.service";
 import { useAcademicYearStore } from "@/src/store/academic-year-store";
@@ -24,8 +34,11 @@ const nav = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/academic-years", label: "Academic Years", icon: CalendarRange },
   { href: "/admin/departments", label: "Departments", icon: Layers },
+  { href: "/admin/groups", label: "Groups", icon: UsersRound },
+  { href: "/admin/students", label: "Students", icon: Users },
   { href: "/admin/subjects", label: "Subjects", icon: BookOpen },
   { href: "/admin/lectures", label: "Lectures", icon: GraduationCap },
+  { href: "/admin/settings", label: "Settings", icon: Cog },
 ];
 
 export function AdminSidebar() {

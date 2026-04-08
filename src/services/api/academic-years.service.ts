@@ -3,6 +3,8 @@ import type {
   AcademicYear,
   CreateAcademicYearRequest,
   DeleteSuccessResponse,
+  PromoteStudentsRequest,
+  PromoteStudentsResponse,
   UpdateAcademicYearRequest,
 } from "@/src/types/api";
 
@@ -25,6 +27,12 @@ export const academicYearsService = {
 
   close(id: string): Promise<AcademicYear> {
     return apiClient.patch<AcademicYear>(`/academic-years/${id}/close`).then((r) => r.data);
+  },
+
+  promote(body: PromoteStudentsRequest): Promise<PromoteStudentsResponse> {
+    return apiClient
+      .post<PromoteStudentsResponse>("/academic-years/promote", body)
+      .then((r) => r.data);
   },
 
   remove(id: string): Promise<DeleteSuccessResponse> {

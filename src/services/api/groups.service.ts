@@ -1,11 +1,22 @@
 import { apiClient } from "@/src/services/api/client";
 import type { CreateGroupRequest, Group, UpdateGroupRequest } from "@/src/types/api";
 
+export interface GroupListParams {
+  academicYearId?: string;
+  departmentId?: string;
+}
+
 export const groupsService = {
-  list(academicYearId?: string): Promise<Group[]> {
+  list(params?: GroupListParams): Promise<Group[]> {
     return apiClient
       .get<Group[]>("/groups", {
-        params: academicYearId ? { academicYearId } : undefined,
+        params:
+          params?.academicYearId || params?.departmentId
+            ? {
+                academicYearId: params.academicYearId,
+                departmentId: params.departmentId,
+              }
+            : undefined,
       })
       .then((r) => r.data);
   },

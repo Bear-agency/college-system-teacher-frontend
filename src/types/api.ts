@@ -155,7 +155,9 @@ export interface MigrateLecturesResponse {
 
 /** Groups (admin) */
 export interface CreateGroupRequest {
-  title: string;
+  name: string;
+  courseNumber: 1 | 2 | 3 | 4;
+  departmentId: string;
   academicYearId: string;
 }
 
@@ -163,9 +165,12 @@ export type UpdateGroupRequest = Partial<CreateGroupRequest>;
 
 export interface Group {
   _id: string;
-  title: string;
+  name: string;
+  courseNumber: number;
+  departmentId: string | { _id: string; name?: string; code?: string | null };
   /** Populated or raw ObjectId string from API */
   academicYear?: string | { _id: string; title?: string };
+  isGraduated?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -175,6 +180,72 @@ export interface CreateStudentRequest {
   fullName: string;
   email: string;
   groupId: string;
+  tgId?: string;
+  isActive?: boolean;
+}
+
+export interface UpdateStudentRequest {
+  fullName?: string;
+  email?: string;
+  groupId?: string;
+  tgId?: string;
+  isActive?: boolean;
+}
+
+export interface Student {
+  _id: string;
+  fullName: string;
+  email: string;
+  tgId?: string;
+  isActive: boolean;
+  group: Group | string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface StudentListParams {
+  academicYearId?: string;
+  departmentId?: string;
+  groupId?: string;
+  courseNumber?: 1 | 2 | 3 | 4;
+}
+
+export interface BulkImportStudentsRequest {
+  groupId: string;
+  students: { fullName: string; email: string; tgId?: string }[];
+}
+
+export interface BulkImportStudentsResponse {
+  created: number;
+  failed: { email: string; reason: string }[];
+}
+
+export interface PromoteStudentsRequest {
+  fromAcademicYearId: string;
+  toAcademicYearId: string;
+}
+
+export interface PromoteStudentsResponse {
+  promotedGroupIds: string[];
+  graduatedGroupIds: string[];
+  studentsMoved: number;
+  sourceGroupsProcessed: number;
+}
+
+/** Subject ↔ group ↔ year link */
+export interface CreateSubjectAssignmentRequest {
+  subjectId: string;
+  groupId: string;
+  academicYearId: string;
+}
+
+export interface SubjectAssignment {
+  _id: string;
+  subjectId: unknown;
+  groupId: unknown;
+  academicYearId: unknown;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /** Tests */

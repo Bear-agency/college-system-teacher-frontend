@@ -56,20 +56,33 @@ export const subjectCreateSchema = z.object({
 
 export const subjectUpdateSchema = subjectCreateSchema.partial();
 
+export const groupCreateSchema = z.object({
+  name: z.string().min(2).max(40),
+  courseNumber: z.union([
+    z.literal(1),
+    z.literal(2),
+    z.literal(3),
+    z.literal(4),
+  ]),
+  departmentId: mongoId,
+});
+
+export const groupUpdateSchema = groupCreateSchema.partial();
+
 export const lectureCreateSchema = z.object({
-  title: z.string().min(3).max(120),
+  title: z.string().min(3).max(500),
   subjectId: mongoId,
   contentMarkdown: z.string().max(500_000).optional(),
 });
 
 /** Form-only: subject chosen in UI context, not in the form fields */
 export const lectureCreateFormSchema = z.object({
-  title: z.string().min(3).max(120),
+  title: z.string().min(3).max(500),
   contentMarkdown: z.string().max(500_000).optional(),
 });
 
 export const lectureUpdateSchema = z.object({
-  title: z.string().min(3).max(120).optional(),
+  title: z.string().min(3).max(500).optional(),
   contentMarkdown: z.string().max(500_000).optional(),
 });
 

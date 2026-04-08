@@ -7,5 +7,6 @@ export { healthService } from "@/src/services/api/health.service";
 export { lecturesService } from "@/src/services/api/lectures.service";
 export { studentsService } from "@/src/services/api/students.service";
 export { subjectsService } from "@/src/services/api/subjects.service";
+export { subjectAssignmentsService } from "@/src/services/api/subject-assignments.service";
 export { testsService } from "@/src/services/api/tests.service";
 export { usersService } from "@/src/services/api/users.service";
